@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Model weights and generated results
+*.pt
+outputs/
+
+# Keep private/raw recordings out of Git
+data/private/
+data/raw/
