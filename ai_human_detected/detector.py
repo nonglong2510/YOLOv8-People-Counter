@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 import cv2
@@ -56,6 +57,7 @@ class PersonDetector:
             raise ValueError(f"Could not open webcam device index: {camera_index}")
 
         total_frames = 0
+        started_at = time.perf_counter()
         try:
             while True:
                 success, frame = capture.read()
@@ -64,15 +66,27 @@ class PersonDetector:
 
                 annotated_frame, count = self.process_frame(frame)
                 total_frames += 1
+                elapsed = max(time.perf_counter() - started_at, 1e-9)
+                fps = total_frames / elapsed
+                cv2.putText(
+                    annotated_frame,
+                    f"FPS: {fps:.1f}",
+                    (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2,
+                    cv2.LINE_AA,
+                )
 
                 if display:
                     cv2.imshow(window_name, annotated_frame)
                     key = cv2.waitKey(1) & 0xFF
-                    if key == ord("q"):
+                    if key in (ord("q"), 27):
                         break
 
                 if not display:
-                    print(f"Frame {total_frames}: People = {count}")
+                    print(f"Frame {total_frames}: People = {count}, FPS = {fps:.1f}")
         finally:
             capture.release()
             if display:

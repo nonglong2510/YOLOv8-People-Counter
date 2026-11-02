@@ -8,8 +8,8 @@ Bản hiện tại không xử lý ảnh tĩnh hay video lưu trên máy; mục 
 
 - Mở webcam trên máy tính.
 - Dùng YOLOv8 để phát hiện lớp `person`.
-- Vẽ bounding box và hiển thị số người được phát hiện trong khung hình hiện tại.
-- Dừng chương trình khi nhấn `q`.
+- Vẽ bounding box, hiển thị số người được phát hiện trong khung hình hiện tại và tốc độ xử lý FPS.
+- Dừng chương trình khi nhấn `q` hoặc `Esc`.
 - Làm nền tảng cho các bước nâng cấp sau như: đếm người qua vạch, đếm lượt đi qua, tích hợp iPhone làm webcam.
 
 ## Yêu cầu
@@ -61,7 +61,7 @@ Các tham số:
 
 ## Dừng chương trình
 
-Nhấn phím `q` trong cửa sổ video hiển thị.
+Nhấn phím `q` hoặc `Esc` trong cửa sổ video hiển thị.
 
 ## Kiểm thử
 

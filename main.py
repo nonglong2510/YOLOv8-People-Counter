@@ -46,6 +46,7 @@ def main() -> None:
         confidence=args.confidence,
         image_size=args.image_size,
     )
+    print("Press 'q' or Esc in the video window to exit.")
     frames_processed = run_webcam(
         detector,
         camera_index=args.camera_index,
@@ -53,7 +54,6 @@ def main() -> None:
         display=True,
     )
     print(f"Processed {frames_processed} webcam frames.")
-    print("Press 'q' in the video window to exit.")
 
 
 if __name__ == "__main__":

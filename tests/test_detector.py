@@ -81,6 +81,28 @@ class PersonDetectorTests(unittest.TestCase):
         frames = detector.run_webcam(camera_index=0, display=True)
 
         self.assertEqual(frames, 1)
+        self.assertTrue(
+            any(call.args[1].startswith("FPS:") for call in _put_text.call_args_list)
+        )
+
+    @patch("ai_human_detected.detector.cv2.destroyAllWindows")
+    @patch("ai_human_detected.detector.cv2.waitKey", return_value=27)
+    @patch("ai_human_detected.detector.cv2.imshow")
+    @patch("ai_human_detected.detector.cv2.VideoCapture", return_value=FakeCapture(["frame1", "frame2"]))
+    @patch("ai_human_detected.detector.cv2.putText", side_effect=lambda frame, *args: frame)
+    def test_webcam_loop_stops_on_escape(
+        self,
+        _put_text,
+        _mock_video_capture,
+        _mock_imshow,
+        _mock_wait_key,
+        _mock_destroy,
+    ):
+        detector = PersonDetector(model=FakeModel(FakeResult(boxes=[object()])))
+
+        frames = detector.run_webcam(camera_index=0, display=True)
+
+        self.assertEqual(frames, 1)
 
     def test_rejects_confidence_outside_range(self):
         with self.assertRaises(ValueError):
