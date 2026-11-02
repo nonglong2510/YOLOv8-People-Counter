@@ -8,8 +8,9 @@ Bản hiện tại không xử lý ảnh tĩnh hay video lưu trên máy; mục 
 
 - Mở webcam trên máy tính.
 - Dùng YOLOv8 để phát hiện lớp `person`.
-- Vẽ bounding box, hiển thị số người được phát hiện trong khung hình hiện tại và tốc độ xử lý FPS.
-- Dừng chương trình khi nhấn `q` hoặc `Esc`.
+- Hiển thị video, bounding box, số người trong khung hình hiện tại và FPS trên giao diện OpenCV.
+- Tạm dừng nhận diện bằng nút trên giao diện hoặc phím `Space`.
+- Dừng chương trình bằng nút trên giao diện, phím `q` hoặc `Esc`.
 - Làm nền tảng cho các bước nâng cấp sau như: đếm người qua vạch, đếm lượt đi qua, tích hợp iPhone làm webcam.
 
 ## Yêu cầu
@@ -59,9 +60,15 @@ Các tham số:
 - `--image-size`: kích thước khung để chạy YOLO
 - `--window-name`: tiêu đề cửa sổ hiển thị
 
-## Dừng chương trình
+## Giao diện và điều khiển
 
-Nhấn phím `q` hoặc `Esc` trong cửa sổ video hiển thị.
+Khi chạy, ứng dụng hiển thị giao diện desktop được dựng bằng OpenCV, gồm vùng video, số người hiện tại, FPS, confidence và image size.
+
+- Nhấn nút **Tam dung** hoặc phím `Space` để tạm dừng/tiếp tục nhận diện. Hình ảnh webcam vẫn tiếp tục được cập nhật.
+- Nhấn nút **Dung**, `q` hoặc `Esc` để thoát.
+- Chọn camera bằng tham số `--camera-index`; các tham số `--model`, `--confidence` và `--image-size` vẫn được cấu hình khi chạy chương trình.
+
+OpenCV hiển thị nhãn giao diện bằng bộ font tích hợp, vì vậy một số nhãn được viết không dấu để tránh lỗi hiển thị tiếng Việt.
 
 ## Kiểm thử
 
