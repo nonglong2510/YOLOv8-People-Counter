@@ -46,7 +46,7 @@ def main() -> None:
         confidence=args.confidence,
         image_size=args.image_size,
     )
-    print("Press 'q' or Esc in the video window to exit.")
+    print("Use Space to pause/resume; press 'q' or Esc to exit.")
     frames_processed = run_webcam(
         detector,
         camera_index=args.camera_index,
