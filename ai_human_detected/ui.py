@@ -15,6 +15,10 @@ class OpenCVDashboard:
     VIDEO_RECT = (220, 130, 730, 500)
     PAUSE_BUTTON = (975, 76, 130, 40)
     STOP_BUTTON = (1115, 76, 135, 40)
+    CAMERA_DECREASE_BUTTON = (24, 321, 42, 34)
+    CAMERA_INCREASE_BUTTON = (75, 321, 42, 34)
+    CONFIDENCE_SLIDER = (997, 460, 230)
+    IMAGE_SIZE_OPTIONS = (320, 416, 640)
 
     BACKGROUND = (245, 247, 252)
     NAVY = (34, 48, 69)
@@ -35,6 +39,8 @@ class OpenCVDashboard:
         self.camera_index = camera_index
         self.paused = False
         self.should_close = False
+        self.requested_camera_index: int | None = None
+        self.status_message: str | None = None
 
     @staticmethod
     def _inside(point: tuple[int, int], rect: tuple[int, int, int, int]) -> bool:
@@ -49,6 +55,29 @@ class OpenCVDashboard:
             self.paused = not self.paused
         elif self._inside((x, y), self.STOP_BUTTON):
             self.should_close = True
+        elif self._inside((x, y), self.CAMERA_DECREASE_BUTTON):
+            self.requested_camera_index = max(0, self.camera_index - 1)
+        elif self._inside((x, y), self.CAMERA_INCREASE_BUTTON):
+            self.requested_camera_index = self.camera_index + 1
+        elif abs(y - self.CONFIDENCE_SLIDER[1]) <= 12:
+            start_x, slider_y, width = self.CONFIDENCE_SLIDER
+            if start_x <= x <= start_x + width:
+                self.detector.confidence = round((x - start_x) / width, 2)
+        else:
+            self._select_image_size(x, y)
+
+    def _select_image_size(self, x: int, y: int) -> None:
+        button_y = 500
+        button_width = 72
+        spacing = 6
+        start_x = 997
+        if not button_y <= y <= button_y + 26:
+            return
+        for index, image_size in enumerate(self.IMAGE_SIZE_OPTIONS):
+            left = start_x + index * (button_width + spacing)
+            if left <= x <= left + button_width:
+                self.detector.image_size = image_size
+                return
 
     def _text(
         self,
@@ -110,19 +139,22 @@ class OpenCVDashboard:
             1,
         )
 
-        self._text(canvas, "YOLOv8 VISION", (22, 38), 0.72, self.WHITE, 2)
-        self._text(canvas, "Nhan dien va dem nguoi", (20, 58), 0.35, (205, 213, 224))
+        self._text(canvas, "YOLOv8 Vision", (22, 38), 0.72, self.WHITE, 2)
+        self._text(canvas, "Real-time people detection", (20, 58), 0.35, (205, 213, 224))
         cv2.rectangle(canvas, (12, 91), (178, 132), (53, 72, 98), -1)
-        self._text(canvas, "Giam sat truc tiep", (24, 117), 0.47, self.WHITE, 1)
-        self._text(canvas, "Dieu khien", (24, 170), 0.48, (205, 213, 224), 1)
-        self._text(canvas, "Space: Tam dung", (24, 198), 0.4, (177, 188, 202))
-        self._text(canvas, "Q / Esc: Thoat", (24, 222), 0.4, (177, 188, 202))
+        self._text(canvas, "Live monitoring", (24, 117), 0.47, self.WHITE, 1)
+        self._text(canvas, "Controls", (24, 170), 0.48, (205, 213, 224), 1)
+        self._text(canvas, "Space: Pause", (24, 198), 0.4, (177, 188, 202))
+        self._text(canvas, "Q / Esc: Exit", (24, 222), 0.4, (177, 188, 202))
         self._text(canvas, "Camera index", (24, 281), 0.42, (177, 188, 202))
         self._text(canvas, str(self.camera_index), (24, 307), 0.65, self.WHITE, 2)
+        self._button(canvas, self.CAMERA_DECREASE_BUTTON, "-", (72, 83, 102))
+        self._button(canvas, self.CAMERA_INCREASE_BUTTON, "+", (72, 83, 102))
+        self._text(canvas, "Switch camera", (24, 378), 0.4, (177, 188, 202))
         self._text(canvas, "OpenCV Desktop", (20, 755), 0.4, (177, 188, 202))
 
-        self._text(canvas, "Giam sat truc tiep", (220, 39), 0.72, self.TEXT, 2)
-        state_text = "TAM DUNG" if self.paused else "DANG CHAY"
+        self._text(canvas, "Live monitoring", (220, 39), 0.72, self.TEXT, 2)
+        state_text = "PAUSED" if self.paused else "RUNNING"
         state_color = self.MUTED if self.paused else self.GREEN
         cv2.circle(canvas, (690, 33), 6, state_color, -1)
         self._text(canvas, state_text, (705, 39), 0.48, state_color, 2)
@@ -131,7 +163,7 @@ class OpenCVDashboard:
         self._panel(canvas, self.VIDEO_RECT)
         video_x, video_y, video_width, video_height = self.VIDEO_RECT
         if frame is None:
-            self._text(canvas, "Dang cho khung hinh tu camera...", (video_x + 170, video_y + 250), 0.65, self.MUTED)
+            self._text(canvas, "Waiting for camera frame...", (video_x + 170, video_y + 250), 0.65, self.MUTED)
         else:
             available_width = video_width - 12
             available_height = video_height - 12
@@ -151,52 +183,65 @@ class OpenCVDashboard:
                     self.NAVY,
                     -1,
                 )
-                self._text(canvas, "TAM DUNG NHAN DIEN", (video_x + 20, video_y + 34), 0.5, self.WHITE, 2)
+                self._text(canvas, "DETECTION PAUSED", (video_x + 20, video_y + 34), 0.5, self.WHITE, 2)
 
-        self._text(canvas, "VIDEO WEBCAM", (video_x, video_y - 14), 0.42, self.MUTED, 1)
+        self._text(canvas, "WEBCAM VIDEO", (video_x, video_y - 14), 0.42, self.MUTED, 1)
         self._panel(canvas, (video_x, 648, video_width, 54))
         self._text(
             canvas,
-            "So nguoi hien tai la so nguoi duoc phat hien trong frame.",
+            "Current count shows people detected in this frame.",
             (video_x + 14, 671),
             0.43,
             self.TEXT,
         )
         self._text(
             canvas,
-            "Khong phai tong luot nguoi di qua.",
+            "This is not a cumulative entrance/exit count.",
             (video_x + 14, 690),
             0.43,
             self.MUTED,
         )
 
         self._panel(canvas, (975, 130, 275, 125))
-        self._text(canvas, "SO NGUOI HIEN TAI", (997, 160), 0.45, self.MUTED, 1)
+        self._text(canvas, "PEOPLE IN CURRENT FRAME", (997, 160), 0.42, self.MUTED, 1)
         self._text(canvas, str(people_count), (997, 222), 1.8, self.BLUE, 2)
-        self._text(canvas, "nguoi / frame", (1050, 220), 0.45, self.MUTED)
+        self._text(canvas, "people / frame", (1050, 220), 0.45, self.MUTED)
 
         self._panel(canvas, (975, 270, 275, 100))
-        self._text(canvas, "FPS TRUNG BINH", (997, 300), 0.45, self.MUTED, 1)
+        self._text(canvas, "AVERAGE PROCESSING SPEED", (997, 300), 0.38, self.MUTED, 1)
         self._text(canvas, f"{fps:.1f} FPS", (997, 345), 0.95, self.GREEN, 2)
 
-        self._panel(canvas, (975, 385, 275, 115))
-        self._text(canvas, "CAU HINH NHAN DIEN", (997, 415), 0.45, self.MUTED, 1)
-        self._text(canvas, f"Confidence: {self.detector.confidence:.2f}", (997, 447), 0.48)
-        self._text(canvas, f"Image size: {self.detector.image_size}", (997, 476), 0.48)
+        self._panel(canvas, (975, 385, 275, 145))
+        self._text(canvas, "DETECTION SETTINGS", (997, 415), 0.45, self.MUTED, 1)
+        self._text(canvas, f"Confidence: {self.detector.confidence:.2f}", (997, 445), 0.44)
+        slider_x, slider_y, slider_width = self.CONFIDENCE_SLIDER
+        slider_end = slider_x + slider_width
+        cv2.line(canvas, (slider_x, slider_y), (slider_end, slider_y), self.BORDER, 5)
+        current_x = slider_x + int(self.detector.confidence * slider_width)
+        cv2.line(canvas, (slider_x, slider_y), (current_x, slider_y), self.BLUE, 5)
+        cv2.circle(canvas, (current_x, slider_y), 8, self.BLUE, -1)
+        self._text(canvas, "Image size", (997, 490), 0.4, self.MUTED)
+        for index, image_size in enumerate(self.IMAGE_SIZE_OPTIONS):
+            x = 997 + index * 78
+            color = self.BLUE if self.detector.image_size == image_size else (235, 239, 247)
+            text_color = self.WHITE if self.detector.image_size == image_size else self.TEXT
+            cv2.rectangle(canvas, (x, 500), (x + 72, 526), color, -1)
+            self._text(canvas, str(image_size), (x + 17, 519), 0.42, text_color, 1)
 
         self._button(
             canvas,
             self.PAUSE_BUTTON,
-            "Tiep tuc" if self.paused else "Tam dung",
+            "Resume" if self.paused else "Pause",
             self.GREEN if self.paused else self.BLUE,
         )
-        self._button(canvas, self.STOP_BUTTON, "Dung", self.RED)
+        self._button(canvas, self.STOP_BUTTON, "Stop", self.RED)
 
-        self._panel(canvas, (975, 540, 275, 80))
-        self._text(canvas, "TRANG THAI", (997, 568), 0.43, self.MUTED, 1)
-        self._text(canvas, frame_status, (997, 596), 0.43, state_color)
-        self._text(canvas, f"So frame da xu ly: {processed_frames}", (220, 730), 0.43, self.MUTED)
-        self._text(canvas, "Phim tat: Space tam dung | Q/Esc thoat", (220, 760), 0.43, self.MUTED)
+        self._panel(canvas, (975, 548, 275, 80))
+        self._text(canvas, "STATUS", (997, 576), 0.43, self.MUTED, 1)
+        status_color = self.RED if "Unable to open" in frame_status else state_color
+        self._text(canvas, frame_status, (997, 604), 0.38, status_color)
+        self._text(canvas, f"Processed frames: {processed_frames}", (220, 730), 0.43, self.MUTED)
+        self._text(canvas, "Shortcuts: Space to pause | Q/Esc to exit", (220, 760), 0.43, self.MUTED)
         return canvas
 
 
@@ -219,23 +264,39 @@ def run_opencv_dashboard(
         processed_frames = 0
         people_count = 0
         started_at = time.perf_counter()
-        frame_status = "Camera dang hoat dong"
+        frame_status = "Camera connected"
         while not dashboard.should_close:
+            if dashboard.requested_camera_index is not None:
+                requested_index = dashboard.requested_camera_index
+                dashboard.requested_camera_index = None
+                candidate = cv2.VideoCapture(requested_index)
+                if candidate.isOpened():
+                    capture.release()
+                    capture = candidate
+                    dashboard.camera_index = requested_index
+                    dashboard.status_message = None
+                    people_count = 0
+                else:
+                    candidate.release()
+                    dashboard.status_message = f"Unable to open camera {requested_index}"
+
             success, frame = capture.read()
             if not success:
-                frame_status = "Khong nhan duoc frame tu camera"
+                frame_status = "No frame received from camera"
                 break
             if not dashboard.paused:
                 annotated_frame, people_count = detector.process_frame(frame)
                 processed_frames += 1
             elif dashboard.paused:
                 annotated_frame = frame
-                frame_status = "Nhan dien dang tam dung"
+                frame_status = "Detection is paused"
 
             elapsed = max(time.perf_counter() - started_at, 1e-9)
             fps = processed_frames / elapsed
-            if not dashboard.paused:
-                frame_status = "Camera dang hoat dong"
+            if dashboard.paused:
+                frame_status = "Detection is paused"
+            else:
+                frame_status = dashboard.status_message or "Camera connected"
 
             cv2.imshow(
                 window_name,

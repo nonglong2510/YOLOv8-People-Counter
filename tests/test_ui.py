@@ -39,6 +39,39 @@ class FakeCapture:
 
 
 class OpenCVDashboardTests(unittest.TestCase):
+    def test_controls_update_camera_confidence_and_image_size(self):
+        detector = FakeDetector()
+        dashboard = OpenCVDashboard(detector, 0)
+
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            dashboard.CAMERA_INCREASE_BUTTON[0] + 1,
+            dashboard.CAMERA_INCREASE_BUTTON[1] + 1,
+            0,
+            None,
+        )
+        self.assertEqual(dashboard.requested_camera_index, 1)
+
+        slider_x, slider_y, slider_width = dashboard.CONFIDENCE_SLIDER
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            slider_x + slider_width // 2,
+            slider_y,
+            0,
+            None,
+        )
+        self.assertEqual(detector.confidence, 0.5)
+
+        image_size_x = 997 + 2 * 78 + 10
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            image_size_x,
+            510,
+            0,
+            None,
+        )
+        self.assertEqual(detector.image_size, 640)
+
     def test_mouse_controls_toggle_pause_and_stop(self):
         dashboard = OpenCVDashboard(FakeDetector(), 0)
 

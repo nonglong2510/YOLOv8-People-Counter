@@ -64,11 +64,13 @@ Các tham số:
 
 Khi chạy, ứng dụng hiển thị giao diện desktop được dựng bằng OpenCV, gồm vùng video, số người hiện tại, FPS, confidence và image size.
 
-- Nhấn nút **Tam dung** hoặc phím `Space` để tạm dừng/tiếp tục nhận diện. Hình ảnh webcam vẫn tiếp tục được cập nhật.
-- Nhấn nút **Dung**, `q` hoặc `Esc` để thoát.
-- Chọn camera bằng tham số `--camera-index`; các tham số `--model`, `--confidence` và `--image-size` vẫn được cấu hình khi chạy chương trình.
+- Click **Pause/Resume** or press `Space` to pause/resume detection. The webcam image continues to update.
+- Click **Stop**, or press `q` or `Esc` to exit.
+- Use the `-` / `+` buttons in the sidebar to switch cameras. If the selected camera cannot be opened, the app reports an error and keeps the current camera.
+- Click the confidence slider or one of the image-size options to change detection settings while the app is running.
+- Các tham số `--camera-index`, `--model`, `--confidence` và `--image-size` vẫn có thể cấu hình khi khởi chạy.
 
-OpenCV hiển thị nhãn giao diện bằng bộ font tích hợp, vì vậy một số nhãn được viết không dấu để tránh lỗi hiển thị tiếng Việt.
+The interface uses English labels because OpenCV's built-in Hershey fonts do not support Vietnamese diacritics. Command-line options and this README remain in Vietnamese where appropriate.
 
 ## Kiểm thử
 
