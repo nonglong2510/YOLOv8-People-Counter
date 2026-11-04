@@ -1,10 +1,16 @@
 import time
+from pathlib import Path
 from typing import Any
 
 import cv2
 import numpy as np
 
 from ai_human_detected.detector import PersonDetector
+from ai_human_detected.settings import (
+    AppSettings,
+    DEFAULT_SETTINGS,
+    save_settings,
+)
 
 
 class OpenCVDashboard:
@@ -15,6 +21,8 @@ class OpenCVDashboard:
     VIDEO_RECT = (220, 130, 730, 500)
     PAUSE_BUTTON = (975, 76, 130, 40)
     STOP_BUTTON = (1115, 76, 135, 40)
+    SAVE_SETTINGS_BUTTON = (975, 648, 130, 48)
+    RESTORE_DEFAULTS_BUTTON = (1115, 648, 135, 48)
     CAMERA_DECREASE_BUTTON = (24, 321, 42, 34)
     CAMERA_INCREASE_BUTTON = (75, 321, 42, 34)
     CONFIDENCE_SLIDER = (997, 460, 230)
@@ -34,9 +42,11 @@ class OpenCVDashboard:
         self,
         detector: PersonDetector,
         camera_index: int,
+        settings_path: Path | None = None,
     ) -> None:
         self.detector = detector
         self.camera_index = camera_index
+        self.settings_path = settings_path
         self.paused = False
         self.should_close = False
         self.requested_camera_index: int | None = None
@@ -59,6 +69,10 @@ class OpenCVDashboard:
             self.requested_camera_index = max(0, self.camera_index - 1)
         elif self._inside((x, y), self.CAMERA_INCREASE_BUTTON):
             self.requested_camera_index = self.camera_index + 1
+        elif self._inside((x, y), self.SAVE_SETTINGS_BUTTON):
+            self.save_current_settings()
+        elif self._inside((x, y), self.RESTORE_DEFAULTS_BUTTON):
+            self.restore_defaults()
         elif abs(y - self.CONFIDENCE_SLIDER[1]) <= 12:
             start_x, slider_y, width = self.CONFIDENCE_SLIDER
             if start_x <= x <= start_x + width:
@@ -78,6 +92,31 @@ class OpenCVDashboard:
             if left <= x <= left + button_width:
                 self.detector.image_size = image_size
                 return
+
+    def save_current_settings(self) -> None:
+        settings = AppSettings(
+            camera_index=self.camera_index,
+            model_path=self.detector.model_path,
+            confidence=self.detector.confidence,
+            image_size=self.detector.image_size,
+        )
+        try:
+            save_settings(settings, self.settings_path)
+        except OSError as error:
+            self.status_message = f"Unable to save settings: {error}"
+            return
+        self.status_message = "Settings saved for the next launch."
+
+    def restore_defaults(self) -> None:
+        self.detector.confidence = DEFAULT_SETTINGS.confidence
+        self.detector.image_size = DEFAULT_SETTINGS.image_size
+        self.requested_camera_index = DEFAULT_SETTINGS.camera_index
+        try:
+            save_settings(DEFAULT_SETTINGS, self.settings_path)
+        except OSError as error:
+            self.status_message = f"Unable to restore settings: {error}"
+            return
+        self.status_message = "Defaults saved; restart to reload the default model."
 
     def _text(
         self,
@@ -239,7 +278,11 @@ class OpenCVDashboard:
         self._panel(canvas, (975, 548, 275, 80))
         self._text(canvas, "STATUS", (997, 576), 0.43, self.MUTED, 1)
         status_color = self.RED if "Unable to open" in frame_status else state_color
+        if "Unable to" in frame_status:
+            status_color = self.RED
         self._text(canvas, frame_status, (997, 604), 0.38, status_color)
+        self._button(canvas, self.SAVE_SETTINGS_BUTTON, "Save settings", self.BLUE)
+        self._button(canvas, self.RESTORE_DEFAULTS_BUTTON, "Defaults", (72, 83, 102))
         self._text(canvas, f"Processed frames: {processed_frames}", (220, 730), 0.43, self.MUTED)
         self._text(canvas, "Shortcuts: Space to pause | Q/Esc to exit", (220, 760), 0.43, self.MUTED)
         return canvas
@@ -249,6 +292,7 @@ def run_opencv_dashboard(
     detector: PersonDetector,
     camera_index: int = 0,
     window_name: str = "YOLOv8 Human Detection",
+    settings_path: Path | None = None,
 ) -> int:
     capture = cv2.VideoCapture(camera_index)
     if not capture.isOpened():
@@ -256,7 +300,7 @@ def run_opencv_dashboard(
         raise ValueError(f"Could not open webcam device index: {camera_index}")
 
     try:
-        dashboard = OpenCVDashboard(detector, camera_index)
+        dashboard = OpenCVDashboard(detector, camera_index, settings_path)
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(window_name, dashboard.WIDTH, dashboard.HEIGHT)
         cv2.setMouseCallback(window_name, dashboard.handle_mouse)

@@ -68,7 +68,10 @@ Khi chạy, ứng dụng hiển thị giao diện desktop được dựng bằng
 - Click **Stop**, or press `q` or `Esc` to exit.
 - Use the `-` / `+` buttons in the sidebar to switch cameras. If the selected camera cannot be opened, the app reports an error and keeps the current camera.
 - Click the confidence slider or one of the image-size options to change detection settings while the app is running.
-- Các tham số `--camera-index`, `--model`, `--confidence` và `--image-size` vẫn có thể cấu hình khi khởi chạy.
+- Click **Save settings** to store the current camera, model, confidence, and image size for the next run.
+- Click **Defaults** to restore the default camera, confidence and image size. Restart the app to load the default model if a custom model was used.
+- Settings are stored in the user's application configuration folder (`%APPDATA%\AIHumanDetected\settings.json` on Windows).
+- Command-line options `--camera-index`, `--model`, `--confidence` and `--image-size` override the saved values for the current run.
 
 The interface uses English labels because OpenCV's built-in Hershey fonts do not support Vietnamese diacritics. Command-line options and this README remain in Vietnamese where appropriate.
 
