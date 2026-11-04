@@ -1,7 +1,9 @@
 import argparse
+from dataclasses import replace
 
 from ai_human_detected.app import run_webcam
 from ai_human_detected.detector import PersonDetector
+from ai_human_detected.settings import load_settings, settings_file_path, validate_settings
 
 
 def parse_args() -> argparse.Namespace:
@@ -11,25 +13,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--camera-index",
         type=int,
-        default=0,
-        help="Index of the webcam device to use (default: 0).",
+        default=None,
+        help="Index of the webcam device (overrides the saved setting).",
     )
     parser.add_argument(
         "--model",
-        default="yolov8n.pt",
-        help="Ultralytics model weights (default: yolov8n.pt).",
+        default=None,
+        help="Ultralytics model weights (overrides the saved setting).",
     )
     parser.add_argument(
         "--confidence",
         type=float,
-        default=0.25,
-        help="Minimum detection confidence from 0 to 1 (default: 0.25).",
+        default=None,
+        help="Minimum detection confidence from 0 to 1 (overrides the saved setting).",
     )
     parser.add_argument(
         "--image-size",
         type=int,
-        default=640,
-        help="Inference image size (default: 640).",
+        default=None,
+        help="Inference image size (overrides the saved setting).",
     )
     parser.add_argument(
         "--window-name",
@@ -41,17 +43,27 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    settings = load_settings()
+    settings = replace(
+        settings,
+        camera_index=args.camera_index if args.camera_index is not None else settings.camera_index,
+        model_path=args.model if args.model is not None else settings.model_path,
+        confidence=args.confidence if args.confidence is not None else settings.confidence,
+        image_size=args.image_size if args.image_size is not None else settings.image_size,
+    )
+    settings = validate_settings(settings)
     detector = PersonDetector(
-        model_path=args.model,
-        confidence=args.confidence,
-        image_size=args.image_size,
+        model_path=settings.model_path,
+        confidence=settings.confidence,
+        image_size=settings.image_size,
     )
     print("Use Space to pause/resume; press 'q' or Esc to exit.")
     frames_processed = run_webcam(
         detector,
-        camera_index=args.camera_index,
+        camera_index=settings.camera_index,
         window_name=args.window_name,
         display=True,
+        settings_path=settings_file_path(),
     )
     print(f"Processed {frames_processed} webcam frames.")
 

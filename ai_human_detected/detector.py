@@ -18,6 +18,7 @@ class PersonDetector:
         if image_size <= 0:
             raise ValueError("Image size must be greater than zero.")
 
+        self.model_path = model_path
         self.model = model if model is not None else YOLO(model_path)
         self.confidence = confidence
         self.image_size = image_size

@@ -9,6 +9,7 @@ from ai_human_detected.ui import OpenCVDashboard, run_opencv_dashboard
 class FakeDetector:
     confidence = 0.25
     image_size = 640
+    model_path = "yolov8n.pt"
 
     def __init__(self):
         self.processed_frames = 0
@@ -39,6 +40,79 @@ class FakeCapture:
 
 
 class OpenCVDashboardTests(unittest.TestCase):
+    @patch("ai_human_detected.ui.save_settings")
+    def test_save_settings_button_persists_current_values(self, mock_save_settings):
+        dashboard = OpenCVDashboard(FakeDetector(), 2)
+        dashboard.detector.confidence = 0.6
+        dashboard.detector.image_size = 416
+
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            dashboard.SAVE_SETTINGS_BUTTON[0] + 1,
+            dashboard.SAVE_SETTINGS_BUTTON[1] + 1,
+            0,
+            None,
+        )
+
+        settings = mock_save_settings.call_args.args[0]
+        self.assertEqual(settings.camera_index, 2)
+        self.assertEqual(settings.confidence, 0.6)
+        self.assertEqual(settings.image_size, 416)
+        self.assertIn("Settings saved", dashboard.status_message)
+
+    @patch("ai_human_detected.ui.save_settings")
+    def test_restore_defaults_resets_controls_and_persists_defaults(self, mock_save_settings):
+        detector = FakeDetector()
+        detector.confidence = 0.8
+        detector.image_size = 416
+        dashboard = OpenCVDashboard(detector, 2)
+
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            dashboard.RESTORE_DEFAULTS_BUTTON[0] + 1,
+            dashboard.RESTORE_DEFAULTS_BUTTON[1] + 1,
+            0,
+            None,
+        )
+
+        self.assertEqual(detector.confidence, 0.25)
+        self.assertEqual(detector.image_size, 640)
+        self.assertEqual(dashboard.requested_camera_index, 0)
+        mock_save_settings.assert_called_once()
+
+    def test_controls_update_camera_confidence_and_image_size(self):
+        detector = FakeDetector()
+        dashboard = OpenCVDashboard(detector, 0)
+
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            dashboard.CAMERA_INCREASE_BUTTON[0] + 1,
+            dashboard.CAMERA_INCREASE_BUTTON[1] + 1,
+            0,
+            None,
+        )
+        self.assertEqual(dashboard.requested_camera_index, 1)
+
+        slider_x, slider_y, slider_width = dashboard.CONFIDENCE_SLIDER
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            slider_x + slider_width // 2,
+            slider_y,
+            0,
+            None,
+        )
+        self.assertEqual(detector.confidence, 0.5)
+
+        image_size_x = 997 + 2 * 78 + 10
+        dashboard.handle_mouse(
+            cv2.EVENT_LBUTTONDOWN,
+            image_size_x,
+            510,
+            0,
+            None,
+        )
+        self.assertEqual(detector.image_size, 640)
+
     def test_mouse_controls_toggle_pause_and_stop(self):
         dashboard = OpenCVDashboard(FakeDetector(), 0)
 
