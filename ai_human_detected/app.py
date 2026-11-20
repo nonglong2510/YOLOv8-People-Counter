@@ -10,6 +10,7 @@ def run_webcam(
     window_name: str = "YOLOv8 Human Detection",
     display: bool = True,
     settings_path: Path | None = None,
+    capacity_limit: int = 30,
 ) -> int:
     if display:
         return run_opencv_dashboard(
@@ -17,6 +18,7 @@ def run_webcam(
             camera_index=camera_index,
             window_name=window_name,
             settings_path=settings_path,
+            capacity_limit=capacity_limit,
         )
     return detector.run_webcam(
         camera_index=camera_index,

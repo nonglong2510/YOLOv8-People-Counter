@@ -18,12 +18,33 @@ class SettingsTests(unittest.TestCase):
 
             self.assertEqual(load_settings(path), DEFAULT_SETTINGS)
 
+    def test_existing_settings_without_capacity_use_default_limit(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "settings.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "camera_index": 1,
+                        "model_path": "yolov8n.pt",
+                        "confidence": 0.4,
+                        "image_size": 416,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            settings = load_settings(path)
+
+            self.assertEqual(settings.camera_index, 1)
+            self.assertEqual(settings.capacity_limit, 30)
+
     def test_save_and_load_round_trip(self):
         settings = AppSettings(
             camera_index=2,
             model_path="custom.pt",
             confidence=0.6,
             image_size=416,
+            capacity_limit=45,
         )
         with tempfile.TemporaryDirectory() as temporary_directory:
             path = Path(temporary_directory) / "settings.json"

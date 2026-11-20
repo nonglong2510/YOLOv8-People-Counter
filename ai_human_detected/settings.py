@@ -11,6 +11,7 @@ class AppSettings:
     model_path: str = "yolov8n.pt"
     confidence: float = 0.25
     image_size: int = 640
+    capacity_limit: int = 30
 
 
 DEFAULT_SETTINGS = AppSettings()
@@ -37,6 +38,8 @@ def validate_settings(settings: AppSettings) -> AppSettings:
         raise ValueError("Confidence must be between 0 and 1.")
     if type(settings.image_size) is not int or settings.image_size <= 0:
         raise ValueError("Image size must be greater than zero.")
+    if type(settings.capacity_limit) is not int or settings.capacity_limit <= 0:
+        raise ValueError("Capacity limit must be greater than zero.")
     if not isinstance(settings.model_path, str) or not settings.model_path.strip():
         raise ValueError("Model path cannot be empty.")
     return settings
