@@ -2,9 +2,9 @@
 
 ## Mục tiêu
 
-Xây dựng ứng dụng phát hiện và đếm người trực tiếp từ webcam bằng YOLOv8. Chương trình sẽ hiển thị khung hình từ camera, vẽ bounding box và số người đang xuất hiện trong khung hình hiện tại.
+Xây dựng ứng dụng giám sát sức chứa phòng từ webcam bằng YOLOv8. Chương trình hiển thị khung hình, bounding box, số người hiện diện và cảnh báo sức chứa; đồng thời cho phép lưu và xem lại các phiên giám sát.
 
-Phạm vi hiện tại không bao gồm nhận diện ảnh tĩnh, video lưu trữ trên máy, đếm người đi qua vạch hoặc ghi nhận tổng lượt người trong cả phiên. Những tính năng đó là phần phát triển tiếp theo.
+Số đếm là ước lượng người nhìn thấy trong từng frame, không phải số người duy nhất hay lượt vào/ra. Hệ thống lưu số đếm đã làm mượt theo mẫu thời gian, không lưu hình ảnh hoặc thông tin định danh.
 
 ## Thiết bị và công nghệ
 
@@ -68,37 +68,27 @@ Chỉ cần một module chính cho detector và một entrypoint `main.py`. Kh�
 
 Điều kiện thành công: frame hiển thị liên tục, không treo camera, và số người thay đổi theo từng khung hình theo đúng thực tế.
 
-## Giai đoạn 4 — Tích hợp giao diện và thử nghiệm
+## Giai đoạn 4 — Giao diện và cảnh báo sức chứa
 
-1. Chạy thử với webcam máy tính.
-2. Thử nhiều điều kiện ánh sáng, góc máy và khoảng cách.
-3. Đo FPS và tốc độ xử lý.
-4. Kiểm tra vấn đề phát hiện nhầm hoặc bỏ sót người.
-5. Tránh đặt quá nhiều phụ thuộc vào hiệu ứng UI nếu chưa cần thiết.
+1. Hiển thị số người hiện tại, FPS và trạng thái sức chứa.
+2. Làm mượt số đếm và ổn định chuyển trạng thái cảnh báo.
+3. Cho phép cấu hình giới hạn sức chứa và lưu thiết lập.
 
-## Giai đoạn 5 — Kết nối iPhone nếu cần
+## Giai đoạn 5 — Lịch tuần, lưu phiên và báo cáo
 
-Sau khi webcam máy tính hoạt động ổn định, mới xét giai đoạn đánh giá iPhone làm camera thay thế hoặc bổ sung. Cách này thường cần ứng dụng biến iPhone thành webcam trên Windows và kiểm tra với OpenCV.
+1. Người dùng bắt đầu/kết thúc phiên thủ công hoặc cấu hình lịch lặp theo các ngày trong tuần.
+2. Tự bắt đầu/kết thúc phiên theo lịch khi ứng dụng và camera đang hoạt động.
+3. Lưu mẫu số người đã làm mượt mỗi giây vào SQLite; không lưu ảnh.
+4. Xem lại năm phiên gần nhất và xuất báo cáo tổng hợp CSV.
+5. Thời lượng trạng thái được ước lượng từ các mẫu quan sát; thời gian tạm dừng không được ghi mẫu.
 
-## Giai đoạn 6 — Đánh giá và báo cáo
+## Giai đoạn 6 — Đánh giá, hoàn thiện và báo cáo
 
-1. Ghi lại FPS, số người nhìn thấy theo từng khung hình và mức ổn định của hệ thống.
-2. Trích xuất hình ảnh hoặc video demo cho báo cáo.
-3. So sánh các cảnh: ít người, đông người, có che khuất, ánh sáng yếu.
-4. Viết báo cáo theo cấu trúc: yêu cầu, phương pháp, thiết kế, thực nghiệm, kết quả, hạn chế, hướng phát triển.
-5. Hoàn thiện README và outline demo.
+1. Đo sai số đếm và FPS trong các cảnh ít người, đông người, che khuất và ánh sáng yếu.
+2. Ghi rõ dữ liệu thử nghiệm, giới hạn và điều kiện camera; không suy diễn độ chính xác khi chưa đo.
+3. Hoàn thiện sơ đồ Use Case, ERD, CRUD và sơ đồ tuần tự theo chức năng đã triển khai.
+4. Viết báo cáo, chuẩn bị video demo và cập nhật tài liệu.
 
-## Lộ trình 4 tuần tham khảo
+## Hướng phát triển tùy chọn
 
-| Tuần | Mục tiêu chính |
-|---|---|
-| 1 | Khởi tạo repo, cài đặt môi trường, kiểm tra webcam máy tính |
-| 2 | Xây dựng YOLO detector trên frame webcam |
-| 3 | Tinh chỉnh hiệu năng, thử nhiều cảnh, tối ưu FPS |
-| 4 | Viết báo cáo, demo và hướng mở rộng |
-
-## Thứ tự ưu tiên
-
-**Webcam máy tính → YOLO trên frame → đánh giá tốc độ và độ chính xác → iPhone làm nguồn phụ nếu cần → báo cáo.**
-
-Không bắt đầu với ảnh/video lưu sẵn vì mục tiêu chính của đề tài là nhận diện và đếm người theo thời gian thực qua camera.
+Lọc báo cáo theo ngày/tuần/tháng, quản lý nhiều phòng/camera, tích hợp camera iPhone hoặc đếm lượt qua vạch chỉ nên thực hiện nếu nằm trong phạm vi đồ án.

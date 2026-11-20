@@ -34,6 +34,12 @@ def parse_args() -> argparse.Namespace:
         help="Inference image size (overrides the saved setting).",
     )
     parser.add_argument(
+        "--capacity-limit",
+        type=int,
+        default=None,
+        help="Maximum room capacity (overrides the saved setting).",
+    )
+    parser.add_argument(
         "--window-name",
         default="YOLOv8 Human Detection",
         help="Window title for the live webcam preview.",
@@ -50,6 +56,11 @@ def main() -> None:
         model_path=args.model if args.model is not None else settings.model_path,
         confidence=args.confidence if args.confidence is not None else settings.confidence,
         image_size=args.image_size if args.image_size is not None else settings.image_size,
+        capacity_limit=(
+            args.capacity_limit
+            if args.capacity_limit is not None
+            else settings.capacity_limit
+        ),
     )
     settings = validate_settings(settings)
     detector = PersonDetector(
@@ -64,6 +75,7 @@ def main() -> None:
         window_name=args.window_name,
         display=True,
         settings_path=settings_file_path(),
+        capacity_limit=settings.capacity_limit,
     )
     print(f"Processed {frames_processed} webcam frames.")
 
